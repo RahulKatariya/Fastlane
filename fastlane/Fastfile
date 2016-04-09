@@ -40,7 +40,11 @@ platform :ios do
     clear_derived_data
     ensure_git_status_clean
   end
-
+  
+  lane :podpush do
+    sh("pod trunk push " + app_name + ".podspec --allow-warnings")
+  end
+  
   lane :crashlytics do
     ensure_git_branch(branch: 'develop')
     badge(shield: app_version + "-" + build_number + "-blue", alpha: true)
