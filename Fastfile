@@ -1,0 +1,169 @@
+# Customise this file, documentation can be found here:
+# https://github.com/fastlane/fastlane/tree/master/docs
+# All available actions: https://github.com/fastlane/fastlane/blob/master/docs/Actions.md
+# can also be listed using the `fastlane actions` command
+
+app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+project_directory = ENV['PROJECT_DIRECTORY']
+app_version = ENV['APP_VERSION']
+app_name = ENV['APP_NAME']
+app_sku = ENV['APP_SKU']
+xcode_version = ENV['XCODE_VERSION']
+build_number = Time.now.strftime('%Y%m%d')
+p12_password = ENV['P12_PASSWORD']
+
+# Change the syntax highlighting to Ruby
+# All lines starting with a # are ignored when running `fastlane`
+
+# By default, fastlane will send which actions are used
+# No personal data is shared, more information on https://github.com/fastlane/enhancer
+# Uncomment the following line to opt out
+# opt_out_usage
+
+# Tell fastlane to not automatically create a fastlane/README.md when running fastlane.
+# You can always trigger the creation of this file manually by running fastlane docs
+skip_docs
+
+# If you want to automatically update fastlane if a new version is available:
+# update_fastlane
+
+# This is the minimum version number required.
+# Update this, if you use features of a newer version
+# fastlane_version "1.67.0"
+
+default_platform :ios
+
+platform :ios do
+
+  before_all do
+    ensure_xcode_version(version: xcode_version)
+    clear_derived_data
+    ensure_git_status_clean
+  end
+
+  lane :crashlytics do
+    ensure_git_branch(branch: 'develop')
+    badge(shield: app_version + "-" + build_number + "-blue", alpha: true)
+    increment_build_number(build_number: build_number)
+    buildIPA(development: true)
+    crashlyticsbeta
+    add_git_tag(tag: 'v' + app_version + '-' + build_number)
+  end
+
+  lane :crashlyticsbeta do
+    crashlytics(ipa_path: project_directory + '-Staging.ipa')
+  end
+
+  lane :testflight do
+    lastbuild
+    dependencies
+    buildIPA
+    pilot(
+    app_identifier: app_identifier,
+    testers_file_path: project_directory + "/fastlane/testers.csv",
+    skip_submission: true,
+    distribute_external: false
+    )
+    reset_git_repo(skip_clean: true)
+    switchToLatest
+  end
+
+  lane :switchToLatest do
+    sh("git checkout develop")
+  end
+
+  lane :lastbuild do
+    remote_count = sh("git remote show | wc -l")
+    if remote_count > 0.to_s
+      sh("git fetch --tags")
+    end
+    sh("git checkout " + last_git_tag)
+  end
+
+  lane :dependencies do
+    cocoapods
+  end
+
+  desc "Build the IPA"
+  lane :buildIPA do |options|
+    _app_identifier = app_identifier + (options[:development] ? ".Staging" : "")
+
+    produce(
+    app_identifier: _app_identifier,
+    app_name: app_name,
+    app_version: app_version,
+    sku: app_sku,
+    skip_itc: options[:development]
+    )
+
+    update_app_identifier(
+    plist_path: project_directory + "/Info.plist",
+    app_identifier: _app_identifier
+    )
+
+    scan(
+    scheme: project_directory,
+    clean: true
+    )
+
+    pem(
+    app_identifier: _app_identifier,
+    p12_password: p12_password,
+    development: options[:development]
+    )
+
+    cert(
+    development: options[:development]
+    )
+
+    sigh(
+    app_identifier: _app_identifier,
+    development: options[:development]
+    )
+
+    gym(
+    use_legacy_build_api: true,
+    configuration: (options[:development] ? "Staging" : "Release"),
+    scheme: project_directory,
+    silent: true,
+    clean: true,
+    output_name: project_directory + (options[:development] ? "-Staging" : "")
+    )
+
+    copy_artifacts(
+    target_path: 'artifacts',
+    artifacts: ['*.cer', '*.mobileprovision', '*.pem', '*.p12', '*.pkey', '*.ipa', '*.frameworks', '*.dSYM.zip']
+    )
+
+  end
+
+  # You can define as many lanes as you want
+
+  after_all do |lane|
+
+    reset_git_repo(
+    exclude: ['AarKay','artifacts','fastlane','*.xcworkspace']
+    )
+
+    push_to_git_remote(
+    remote: 'origin',         # optional, default: 'origin'
+    local_branch: 'develop'  # optional, aliased by 'branch', default: 'master'
+    )
+
+    dependencies
+
+  end
+
+  error do |lane, exception|
+
+    reset_git_repo(
+    exclude: ['AarKay','Pods','fastlane','*.xcworkspace']
+    )
+    switchToLatest
+    dependencies
+
+  end
+end
+
+# More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/docs/Platforms.md
+# All available actions: https://github.com/fastlane/fastlane/blob/master/docs/Actions.md
