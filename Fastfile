@@ -25,7 +25,7 @@ p12_password = ENV['P12_PASSWORD']
 skip_docs
 
 # If you want to automatically update fastlane if a new version is available:
-# update_fastlane
+update_fastlane
 
 # This is the minimum version number required.
 # Update this, if you use features of a newer version
@@ -47,7 +47,7 @@ platform :ios do
     increment_build_number(build_number: build_number)
     buildIPA(development: true)
     crashlyticsbeta
-    add_git_tag(tag: 'v' + app_version + '-' + build_number)
+    sh("git tag " + 'v' + app_version + '-' + build_number)
   end
 
   lane :crashlyticsbeta do
