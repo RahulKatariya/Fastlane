@@ -101,11 +101,6 @@ platform :ios do
     app_identifier: _app_identifier
     )
 
-    scan(
-    scheme: project_directory,
-    clean: true
-    )
-
     pem(
     app_identifier: _app_identifier,
     p12_password: p12_password,
