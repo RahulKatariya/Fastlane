@@ -148,7 +148,7 @@ platform :ios do
   after_all do |lane|
 
     reset_git_repo(
-    exclude: ['AarKay','artifacts','fastlane','*.xcworkspace']
+    skip_clean: true
     )
 
     push_to_git_remote(
@@ -161,7 +161,7 @@ platform :ios do
   error do |lane, exception|
 
     reset_git_repo(
-    exclude: ['AarKay','Pods','fastlane','*.xcworkspace']
+    skip_clean: true
     )
     switchToLatest
 
