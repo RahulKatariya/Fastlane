@@ -5,6 +5,7 @@
 
 app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 project_directory = ENV['PROJECT_DIRECTORY']
+scheme = ENV['SCHEME']
 app_version = ENV['APP_VERSION']
 app_name = ENV['APP_NAME']
 app_sku = ENV['APP_SKU']
@@ -38,10 +39,20 @@ platform :ios do
   before_all do
     ensure_xcode_version(version: xcode_version)
     clear_derived_data
-    ensure_git_status_clean
+    test
   end
-  
+
+  lane :test do
+    scan(
+    scheme: scheme,
+    output_types: "",
+    clean: true,
+    code_coverage: true
+    )
+  end
+
   lane :crashlytics do
+    ensure_git_status_clean
     ensure_git_branch(branch: 'develop')
     badge(shield: app_version + "-" + build_number + "-blue", alpha: true)
     increment_build_number(build_number: build_number)
@@ -55,6 +66,7 @@ platform :ios do
   end
 
   lane :testflight do
+    ensure_git_status_clean
     lastbuild
     dependencies
     buildIPA
@@ -78,10 +90,6 @@ platform :ios do
       sh("git fetch --tags")
     end
     sh("git checkout " + last_git_tag)
-  end
-
-  lane :dependencies do
-    cocoapods
   end
 
   desc "Build the IPA"
@@ -132,7 +140,10 @@ platform :ios do
 
   end
 
-  # You can define as many lanes as you want
+  lane :dependencies do
+    cocoapods
+    carthage
+  end
 
   after_all do |lane|
 
@@ -145,8 +156,6 @@ platform :ios do
     local_branch: 'develop'  # optional, aliased by 'branch', default: 'master'
     )
 
-    dependencies
-
   end
 
   error do |lane, exception|
@@ -155,7 +164,6 @@ platform :ios do
     exclude: ['AarKay','Pods','fastlane','*.xcworkspace']
     )
     switchToLatest
-    dependencies
 
   end
 end
