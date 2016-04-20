@@ -39,7 +39,7 @@ platform :ios do
   before_all do
     ensure_xcode_version(version: xcode_version)
     clear_derived_data
-    test
+    ensure_git_status_clean
   end
 
   lane :test do
@@ -52,7 +52,6 @@ platform :ios do
   end
 
   lane :crashlytics do
-    ensure_git_status_clean
     ensure_git_branch(branch: 'develop')
     badge(shield: app_version + "-" + build_number + "-blue", alpha: true)
     increment_build_number(build_number: build_number)
@@ -66,7 +65,6 @@ platform :ios do
   end
 
   lane :testflight do
-    ensure_git_status_clean
     lastbuild
     dependencies
     buildIPA
