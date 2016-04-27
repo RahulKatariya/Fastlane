@@ -10,6 +10,7 @@ ENV['PROJECT_DIRECTORY'] = "Restofire"
 ENV['APP_VERSION'] = "1.0.0"
 ENV['XCODE_VERSION'] = "7.3"
 ENV['APP_NAME'] = "Restofire"
+ENV['SCHEME'] = "Restofire-iOS" # Scheme used in test
 ENV['APP_SKU'] = "Restofire123"
 ENV['P12_PASSWORD'] = "Restofire!2"
 
