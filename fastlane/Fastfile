@@ -37,9 +37,10 @@ default_platform :ios
 platform :ios do
 
   before_all do
+    ensure_git_status_clean
     ensure_xcode_version(version: xcode_version)
     clear_derived_data
-    ensure_git_status_clean
+    test
   end
 
   lane :test do
@@ -61,7 +62,7 @@ platform :ios do
   end
 
   lane :crashlyticsbeta do
-    crashlytics(ipa_path: project_directory + '-Staging.ipa')
+    crashlytics(ipa_path: 'artifacts/' + project_directory + '-Staging.ipa')
   end
 
   lane :testflight do
