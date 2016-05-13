@@ -40,7 +40,6 @@ platform :ios do
     ensure_git_status_clean
     ensure_xcode_version(version: xcode_version)
     clear_derived_data
-    test
   end
 
   lane :test do
