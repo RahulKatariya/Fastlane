@@ -140,7 +140,6 @@ platform :ios do
 
   lane :dependencies do
     cocoapods
-    carthage
   end
 
   after_all do |lane|
