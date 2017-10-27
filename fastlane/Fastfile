@@ -45,7 +45,6 @@ platform :ios do
 
   before_all do
     ensure_git_status_clean
-    xcversion(version: xcode_version)
     clear_derived_data
     app_version = get_version_number(
     xcodeproj: app_name + '.xcodeproj',
@@ -54,6 +53,7 @@ platform :ios do
   end
 
   lane :alpha do |options|
+    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
     current_team_id = appstore_team_id
     team_id current_team_id
     configuration = options[:configuration]
@@ -72,6 +72,7 @@ platform :ios do
   end
 
   lane :enterprise do |options|
+    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
     ENV["MATCH_FORCE_ENTERPRISE"] = "1"
     current_team_id = enterprise_team_id
     team_id current_team_id
@@ -91,6 +92,7 @@ platform :ios do
   end
 
   lane :epic do |options|
+    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
     ENV["MATCH_FORCE_ENTERPRISE"] = "1"
     current_team_id = enterprise_team_id
     team_id current_team_id
