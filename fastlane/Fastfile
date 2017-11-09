@@ -68,7 +68,7 @@ platform :ios do
     pemIPA()
     signIPA(configuration: configuration)
     buildIPA(configuration: configuration)
-    pilot(skip_submission: true, distribute_external: false)
+    pilot(skip_waiting_for_build_processing: true, skip_submission: true, distribute_external: false)
   end
 
   lane :enterprise do |options|
