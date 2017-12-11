@@ -73,7 +73,6 @@ platform :ios do
 
   lane :enterprise do |options|
     xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
-    ENV["MATCH_FORCE_ENTERPRISE"] = "1"
     current_team_id = enterprise_team_id
     team_id current_team_id
     configuration = options[:configuration]
@@ -82,18 +81,17 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id + ".enterprise"
       produceIPA(enterprise:true, extension: extension, services: services)
-      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
+      #signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
     end
     app_identifier = bundle_id + ".enterprise"
     produceIPA(enterprise:true, services:services)
     pemIPA(enterprise:true)
-    signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
+    #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
     buildIPA(enterprise:true, configuration: configuration)
   end
 
   lane :epic do |options|
     xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
-    ENV["MATCH_FORCE_ENTERPRISE"] = "1"
     current_team_id = enterprise_team_id
     team_id current_team_id
     configuration = options[:configuration]
@@ -102,12 +100,12 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id + "." + options[:branch_name]
       produceIPA(enterprise:true, extension: extension, services: services)
-      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
+      #signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
     end
     app_identifier = bundle_id + "." + options[:branch_name]
     produceIPA(enterprise:true, services:services)
     pemIPA(enterprise:true)
-    signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
+    #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
     buildIPA(enterprise:true, configuration: configuration)
     crashlyticsbeta(enterprise: true)
   end
