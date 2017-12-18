@@ -77,7 +77,7 @@ platform :ios do
     current_team_id = enterprise_team_id
     team_id current_team_id
     configuration = options[:configuration]
-    badge(shield: app_version + "-" + build_number + "-blue", dark: true)
+    #badge(shield: app_version + "-" + build_number + "-blue", dark: true)
     increment_build_number(build_number: build_number)
     extensions.each do |extension, services|
       app_identifier = bundle_id + ".enterprise"
@@ -97,7 +97,7 @@ platform :ios do
     current_team_id = enterprise_team_id
     team_id current_team_id
     configuration = options[:configuration]
-    badge(shield: app_version + "-" + options[:branch_name] + "-blue", dark: true)
+    #badge(shield: app_version + "-" + options[:branch_name] + "-blue", dark: true)
     increment_build_number(build_number: build_number)
     extensions.each do |extension, services|
       app_identifier = bundle_id + "." + options[:branch_name]
