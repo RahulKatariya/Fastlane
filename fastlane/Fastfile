@@ -67,7 +67,7 @@ platform :ios do
     produceIPA(services:services)
     pemIPA()
     #signIPA(configuration: configuration)
-    buildIPA(configuration: configuration)
+    buildIPA(configuration: configuration, team_id: current_team_id)
     pilot(skip_waiting_for_build_processing: true, skip_submission: true, distribute_external: false)
   end
 
@@ -87,7 +87,7 @@ platform :ios do
     produceIPA(enterprise:true, services:services)
     pemIPA(enterprise:true)
     #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
-    buildIPA(enterprise:true, configuration: configuration)
+    buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
   end
 
   lane :epic do |options|
@@ -106,7 +106,7 @@ platform :ios do
     produceIPA(enterprise:true, services:services)
     pemIPA(enterprise:true)
     #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
-    buildIPA(enterprise:true, configuration: configuration)
+    buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
     crashlyticsbeta(enterprise: true)
   end
 
@@ -223,7 +223,7 @@ platform :ios do
 
     update_project_team(
     path: app_name + ".xcodeproj",
-    teamid: current_team_id
+    teamid: options[:team_id]
     )
 
     _gym_name = app_name
