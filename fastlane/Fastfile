@@ -44,12 +44,13 @@ default_platform :ios
 platform :ios do
 
   before_all do
-    ensure_git_status_clean
+    ensure_git_status_clean unless is_ci?
     clear_derived_data
     app_version = get_version_number(
     xcodeproj: app_name + '.xcodeproj',
     target: app_name
     )
+    setup_travis()
   end
 
   lane :alpha do |options|
@@ -81,12 +82,12 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id + ".enterprise"
       produceIPA(enterprise:true, extension: extension, services: services)
-      #signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
+      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
     end
     app_identifier = bundle_id + ".enterprise"
     produceIPA(enterprise:true, services:services)
     #pemIPA(enterprise:true)
-    #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
+    signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
     buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
   end
 
@@ -154,10 +155,12 @@ platform :ios do
         _git_branch = options[:branch]
     end
 
+    readonly = options[:readwrite] ? false : true
+
     match(
     git_url: match_url,
     type: "development",
-    readonly: true,
+    readonly: readonly,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: app_identifier + suffix
@@ -166,7 +169,7 @@ platform :ios do
     match(
     git_url: match_url,
     type: "appstore",
-    readonly: true,
+    readonly: readonly,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: app_identifier + suffix
