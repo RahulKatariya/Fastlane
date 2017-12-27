@@ -61,12 +61,12 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id
       produceIPA(extension: extension, services: services)
-      #signIPA(extension: extension, configuration: configuration)
+      signIPA(extension: extension, configuration: configuration)
     end
     app_identifier = bundle_id
     produceIPA(services:services)
     pemIPA()
-    #signIPA(configuration: configuration)
+    signIPA(configuration: configuration)
     buildIPA(configuration: configuration, team_id: current_team_id)
     pilot(skip_waiting_for_build_processing: true, skip_submission: true, distribute_external: false)
   end
@@ -88,26 +88,6 @@ platform :ios do
     #pemIPA(enterprise:true)
     #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
     buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
-  end
-
-  lane :epic do |options|
-    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
-    current_team_id = enterprise_team_id
-    team_id current_team_id
-    configuration = options[:configuration]
-    #badge(shield: app_version + "-" + options[:branch_name] + "-blue", dark: true)
-    increment_build_number(build_number: build_number)
-    extensions.each do |extension, services|
-      app_identifier = bundle_id + "." + options[:branch_name]
-      produceIPA(enterprise:true, extension: extension, services: services)
-      #signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
-    end
-    app_identifier = bundle_id + "." + options[:branch_name]
-    produceIPA(enterprise:true, services:services)
-    #pemIPA(enterprise:true)
-    #signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
-    buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
-    crashlyticsbeta(enterprise: true)
   end
 
   desc "Produce the IPA"
@@ -177,6 +157,7 @@ platform :ios do
     match(
     git_url: match_url,
     type: "development",
+    readonly: true,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: app_identifier + suffix
@@ -185,6 +166,7 @@ platform :ios do
     match(
     git_url: match_url,
     type: "appstore",
+    readonly: true,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: app_identifier + suffix
@@ -226,8 +208,7 @@ platform :ios do
     output_name: _gym_name,
     export_xcargs: "-allowProvisioningUpdates",
     export_options: ({
-        iCloudContainerEnvironment: 'Production',
-        signingStyle: 'automatic'
+        iCloudContainerEnvironment: 'Production'
     })
     )
 
