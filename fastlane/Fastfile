@@ -50,7 +50,6 @@ platform :ios do
     xcodeproj: app_name + '.xcodeproj',
     target: app_name
     )
-    setup_travis()
   end
 
   lane :alpha do |options|
@@ -62,13 +61,13 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id
       produceIPA(extension: extension, services: services)
-      signIPA(extension: extension, configuration: configuration)
+      signIPA(extension: extension, configuration: configuration, readwrite: options[:readwrite])
     end
     app_identifier = bundle_id
     produceIPA(services:services)
-    pemIPA()
-    signIPA(configuration: configuration)
-    buildIPA(configuration: configuration, team_id: current_team_id)
+    # pemIPA()
+    signIPA(configuration: configuration, readwrite: options[:readwrite])
+    buildIPA(configuration: configuration, team_id: current_team_id, readwrite: options[:readwrite])
     pilot(skip_waiting_for_build_processing: true, skip_submission: true, distribute_external: false)
   end
 
@@ -82,12 +81,12 @@ platform :ios do
     extensions.each do |extension, services|
       app_identifier = bundle_id + ".enterprise"
       produceIPA(enterprise:true, extension: extension, services: services)
-      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise")
+      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise", readwrite: options[:readwrite])
     end
     app_identifier = bundle_id + ".enterprise"
     produceIPA(enterprise:true, services:services)
     #pemIPA(enterprise:true)
-    signIPA(enterprise:true, configuration: configuration, branch: "enterprise")
+    signIPA(enterprise:true, configuration: configuration, branch: "enterprise", readwrite: options[:readwrite])
     buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
   end
 
