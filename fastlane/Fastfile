@@ -7,6 +7,7 @@ apple_id = CredentialsManager::AppfileConfig.try_fetch_value(:apple_id)
 bundle_id = ''
 team_id = ''
 configuration = ''
+match_write = false
 
 app_name = ENV['APP_NAME']
 scheme = ENV['SCHEME']
@@ -19,12 +20,12 @@ platform :ios do
 
   desc "Make the IPA"
   lane :makeIPA do |options|
-    enterprise = ENV["MATCH_FORCE_ENTERPRISE"] ? true : false
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     if options[:suffix] then
       bundle_id["enterprise"] = options[:suffix]
     end
+    match_write = options[:match_write] ? match_write : false
     configuration = options[:configuration]
     produceIPA()
     signIPA()
@@ -91,7 +92,7 @@ platform :ios do
     match(
     git_url: ENV['MATCH_URL'],
     type: "development",
-    readonly: true,
+    readonly: !match_write,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: bundle_id + suffix
@@ -100,7 +101,7 @@ platform :ios do
     match(
     git_url: ENV['MATCH_URL'],
     type: "appstore",
-    readonly: true,
+    readonly: !match_write,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: bundle_id + suffix
