@@ -3,91 +3,49 @@
 # All available actions: https://github.com/fastlane/fastlane/blob/master/docs/Actions.md
 # can also be listed using the `fastlane actions` command
 
-app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
-bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 apple_id = CredentialsManager::AppfileConfig.try_fetch_value(:apple_id)
-scheme = ENV['SCHEME']
-app_version = ''
+bundle_id = ''
+team_id = ''
+configuration = ''
+
 app_name = ENV['APP_NAME']
-app_sku = ENV['APP_SKU']
-xcode_version = ENV['XCODE_VERSION']
-build_number = Time.now.strftime('%Y%m%d%H%M')
-p12_password = ENV['P12_PASSWORD']
-appstore_team_id = ENV['TEAM_ID']
-enterprise_team_id = ENV['ENTERPRISE_TEAM_ID']
-current_team_id = ''
+scheme = ENV['SCHEME']
 extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(","))
 services = ENV['SERVICES']
-match_url = ENV['MATCH_URL']
-
-# Change the syntax highlighting to Ruby
-# All lines starting with a # are ignored when running `fastlane`
-
-# By default, fastlane will send which actions are used
-# No personal data is shared, more information on https://github.com/fastlane/enhancer
-# Uncomment the following line to opt out
-opt_out_usage
-
-# Tell fastlane to not automatically create a fastlane/README.md when running fastlane.
-# You can always trigger the creation of this file manually by running fastlane docs
-skip_docs
-
-# If you want to automatically update fastlane if a new version is available:
-# update_fastlane
-
-# This is the minimum version number required.
-# Update this, if you use features of a newer version
-# fastlane_version "1.67.0"
 
 default_platform :ios
 
 platform :ios do
 
-  desc "Prepare"
-  lane :prepare do |options|
-
-    app_version = get_version_number(
-    xcodeproj: app_name + '.xcodeproj',
-    target: app_name
-    )
-
-    suffix = ""
-    if options[:extension] then
-        suffix = "." + options[:extension] + "Extension"
+  desc "Make the IPA"
+  lane :makeIPA do |options|
+    enterprise = ENV["MATCH_FORCE_ENTERPRISE"] ? true : false
+    team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+    bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    if options[:suffix] then
+      bundle_id["enterprise"] = options[:suffix]
     end
-
-    _app_identifier = app_identifier + suffix
-
-    path = ""
-    if options[:extension] then
-        path = options[:extension] + "Extension/"
-    else
-        path = app_name + "-"
-    end
-
-    update_app_identifier(
-    app_identifier: _app_identifier,
-    plist_path: path + "Info.plist"
-    )
-
-    if options[:extension] then
-        update_app_group_identifiers(
-        entitlements_file: path + options[:extension] + "Extension.entitlements",
-  	    app_group_identifiers: ['group.' + app_identifier]
-        )
-    end
-
+    configuration = options[:configuration]
+    produceIPA()
+    signIPA()
+    buildIPA()
   end
 
   desc "Produce the IPA"
   lane :produceIPA do |options|
+    privateProduceIPA(options: options)
+    extensions.each do |extension, services|
+      privateProduceIPA(options: options, extension: extension, services: services)
+    end
+  end
+
+  desc "Produce the IPA"
+  private_lane :privateProduceIPA do |options|
 
     suffix = ""
     if options[:extension] then
         suffix = "." + options[:extension] + "Extension"
     end
-
-    _app_identifier = app_identifier + suffix
 
     path = ""
     if options[:extension] then
@@ -97,74 +55,59 @@ platform :ios do
     end
 
     update_app_identifier(
-    app_identifier: _app_identifier,
+    app_identifier: bundle_id + suffix,
     plist_path: path + "Info.plist"
     )
 
     if options[:extension] then
         update_app_group_identifiers(
         entitlements_file: path + options[:extension] + "Extension.entitlements",
-  	    app_group_identifiers: ['group.' + app_identifier]
+  	    app_group_identifiers: ['group.' + bundle_id]
         )
     end
-
-  end
-
-  desc "PEM the IPA"
-  lane :pemIPA do |options|
-
-    pem(
-    username: apple_id,
-    app_identifier: app_identifier,
-    p12_password: p12_password,
-    development: options[:development],
-    pem_name: app_identifier
-    )
 
   end
 
   desc "Sign the IPA"
   lane :signIPA do |options|
+    privateSignIPA(options: options)
+    extensions.each do |extension, services|
+      privateSignIPA(options: options, extension: extension)
+    end
+  end
 
+  desc "Sign the IPA"
+  private_lane :privateSignIPA do |options|
     automatic_code_signing(
     path: app_name + ".xcodeproj",
     use_automatic_signing: false,
-    team_id: current_team_id,
+    team_id: team_id,
     targets: options[:extension] ? options[:extension] + "Extension" : app_name
     )
 
-    suffix = ""
-    if options[:extension] then
-        suffix = "." + options[:extension] + "Extension"
-    end
-
-    _git_branch = "master"
-    if options[:branch] then
-        _git_branch = options[:branch]
-    end
-
-    readonly = options[:readwrite] ? false : true
+    _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
+    suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
 
     match(
-    git_url: match_url,
+    git_url: ENV['MATCH_URL'],
     type: "development",
-    readonly: readonly,
+    readonly: true,
     git_branch: _git_branch,
     username: apple_id,
-    app_identifier: app_identifier + suffix
+    app_identifier: bundle_id + suffix
     )
 
     match(
-    git_url: match_url,
+    git_url: ENV['MATCH_URL'],
     type: "appstore",
-    readonly: readonly,
+    readonly: true,
     git_branch: _git_branch,
     username: apple_id,
-    app_identifier: app_identifier + suffix
+    app_identifier: bundle_id + suffix
     )
 
     type = options[:development] ? "development" : "appstore"
-    path = "sigh_" + app_identifier + suffix + "_" + type + "_profile-path"
+    path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
 
     update_project_provisioning_profile(
     xcodeproj: app_name + ".xcodeproj",
@@ -172,21 +115,20 @@ platform :ios do
     target_filter: options[:extension] ? options[:extension] + "Extension" : app_name,
     build_configuration: options[:configuration]
     )
-
   end
 
   desc "Build the IPA"
   lane :buildIPA do |options|
 
-    update_project_team(path: app_name + ".xcodeproj", teamid: options[:team_id])
+    update_project_team(path: app_name + ".xcodeproj", teamid: team_id)
 
     _export_method = "app-store"
-    _export_method = (options[:adhoc] ? "adhoc" : _export_method)
-    _export_method = (options[:enterprise] ? "enterprise" : _export_method)
-    _export_method = (options[:development] ? "development" : _export_method)
+    _export_method = options[:adhoc] ? "adhoc" : _export_method
+    _export_method = options[:development] ? "development" : _export_method
+    _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
 
     _icloud_environment = "Production"
-    _icloud_environment = (options[:development] ? "Development" : _icloud_environment)
+    _icloud_environment = options[:development] ? "Development" : _icloud_environment
 
     gym(
     workspace: app_name + ".xcworkspace",
@@ -200,18 +142,6 @@ platform :ios do
     export_options: ({ iCloudContainerEnvironment: _icloud_environment })
     )
 
-  end
-
-  lane :crashlyticsbeta do |options|
-    ipafile = app_name
-    ipafile += (options[:enterprise] ? "-enterprise" : "")
-    ipafile += (options[:development] ? "-development" : "")
-    crashlytics(
-    ipa_path: 'artifacts/' + ipafile + '.ipa',
-    emails: options[:emails],
-    groups: options[:groups],
-    notifications: true
-    )
   end
 
 end
