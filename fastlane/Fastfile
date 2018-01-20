@@ -7,7 +7,6 @@ apple_id = CredentialsManager::AppfileConfig.try_fetch_value(:apple_id)
 bundle_id = ''
 team_id = ''
 configuration = ''
-match_write = false
 
 app_name = ENV['APP_NAME']
 scheme = ENV['SCHEME']
@@ -25,7 +24,6 @@ platform :ios do
     if options[:suffix] then
       bundle_id["enterprise"] = options[:suffix]
     end
-    match_write = options[:match_write] ? match_write : false
     configuration = options[:configuration]
     produceIPA()
     signIPA()
@@ -90,18 +88,14 @@ platform :ios do
     suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
 
     match(
-    git_url: ENV['MATCH_URL'],
     type: "development",
-    readonly: !match_write,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: bundle_id + suffix
     )
 
     match(
-    git_url: ENV['MATCH_URL'],
     type: "appstore",
-    readonly: !match_write,
     git_branch: _git_branch,
     username: apple_id,
     app_identifier: bundle_id + suffix
