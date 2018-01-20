@@ -43,51 +43,40 @@ default_platform :ios
 
 platform :ios do
 
-  before_all do
-    ensure_git_status_clean unless is_ci?
-    clear_derived_data
+  desc "Prepare"
+  lane :prepare do |options|
+
     app_version = get_version_number(
     xcodeproj: app_name + '.xcodeproj',
     target: app_name
     )
-  end
 
-  lane :alpha do |options|
-    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
-    current_team_id = appstore_team_id
-    team_id current_team_id
-    configuration = options[:configuration]
-    increment_build_number(build_number: build_number)
-    extensions.each do |extension, services|
-      app_identifier = bundle_id
-      produceIPA(extension: extension, services: services)
-      signIPA(extension: extension, configuration: configuration, readwrite: options[:readwrite])
+    suffix = ""
+    if options[:extension] then
+        suffix = "." + options[:extension] + "Extension"
     end
-    app_identifier = bundle_id
-    produceIPA(services:services)
-    # pemIPA()
-    signIPA(configuration: configuration, readwrite: options[:readwrite])
-    buildIPA(configuration: configuration, team_id: current_team_id, readwrite: options[:readwrite])
-    pilot(skip_waiting_for_build_processing: true, skip_submission: true, distribute_external: false)
-  end
 
-  lane :enterprise do |options|
-    xcversion(version: options[:xcode_version] ? options[:xcode_version] : xcode_version)
-    current_team_id = enterprise_team_id
-    team_id current_team_id
-    configuration = options[:configuration]
-    #badge(shield: app_version + "-" + build_number + "-blue", dark: true)
-    increment_build_number(build_number: build_number)
-    extensions.each do |extension, services|
-      app_identifier = bundle_id + ".enterprise"
-      produceIPA(enterprise:true, extension: extension, services: services)
-      signIPA(enterprise:true, extension: extension, configuration: configuration, branch: "enterprise", readwrite: options[:readwrite])
+    _app_identifier = app_identifier + suffix
+
+    path = ""
+    if options[:extension] then
+        path = options[:extension] + "Extension/"
+    else
+        path = app_name + "-"
     end
-    app_identifier = bundle_id + ".enterprise"
-    produceIPA(enterprise:true, services:services)
-    #pemIPA(enterprise:true)
-    signIPA(enterprise:true, configuration: configuration, branch: "enterprise", readwrite: options[:readwrite])
-    buildIPA(enterprise:true, configuration: configuration, team_id: current_team_id)
+
+    update_app_identifier(
+    app_identifier: _app_identifier,
+    plist_path: path + "Info.plist"
+    )
+
+    if options[:extension] then
+        update_app_group_identifiers(
+        entitlements_file: path + options[:extension] + "Extension.entitlements",
+  	    app_group_identifiers: ['group.' + app_identifier]
+        )
+    end
+
   end
 
   desc "Produce the IPA"
@@ -189,17 +178,16 @@ platform :ios do
   desc "Build the IPA"
   lane :buildIPA do |options|
 
-    update_project_team(
-    path: app_name + ".xcodeproj",
-    teamid: options[:team_id]
-    )
+    update_project_team(path: app_name + ".xcodeproj", teamid: options[:team_id])
 
-    _gym_name = app_name
-    _gym_name += (options[:enterprise] ? "-enterprise" : "")
-    _gym_name += (options[:development] ? "-development" : "")
     _export_method = "app-store"
+    _export_method = (options[:adhoc] ? "adhoc" : _export_method)
     _export_method = (options[:enterprise] ? "enterprise" : _export_method)
     _export_method = (options[:development] ? "development" : _export_method)
+
+    _icloud_environment = "Production"
+    _icloud_environment = (options[:development] ? "Development" : _icloud_environment)
+
     gym(
     workspace: app_name + ".xcworkspace",
     configuration: (options[:configuration]),
@@ -207,16 +195,9 @@ platform :ios do
     scheme: scheme,
     silent: true,
     clean: true,
-    output_name: _gym_name,
+    output_name: app_name,
     export_xcargs: "-allowProvisioningUpdates",
-    export_options: ({
-        iCloudContainerEnvironment: 'Production'
-    })
-    )
-
-    copy_artifacts(
-    target_path: 'artifacts',
-    artifacts: ['*.cer', '*.mobileprovision', '*.pem', '*.p12', '*.pkey', '*.ipa', '*.frameworks', '*.dSYM.zip']
+    export_options: ({ iCloudContainerEnvironment: _icloud_environment })
     )
 
   end
@@ -233,13 +214,6 @@ platform :ios do
     )
   end
 
-  after_all do |lane|
-
-  end
-
-  error do |lane, exception|
-    sh("git reset --hard && git submodule foreach git reset --hard")
-  end
 end
 
 # More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/docs/Platforms.md
