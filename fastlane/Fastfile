@@ -46,6 +46,24 @@ platform :ios do
         suffix = "." + options[:extension] + "Extension"
     end
 
+    _app_identifier = bundle_id + suffix
+    if options[:force] then
+      produce(
+      username: apple_id,
+      app_identifier: _app_identifier,
+      app_name: app_name,
+      skip_itc: true,
+      )
+
+      if options[:services] then
+        sh("fastlane produce enable_services #{options[:services]} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
+        if options[:services].include? "--app_group" then
+          sh("fastlane produce group -g group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
+          sh("fastlane produce associate_group -a #{app_identifier} group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
+        end
+      end
+    end
+
     path = ""
     if options[:extension] then
         path = options[:extension] + "Extension/"
@@ -54,7 +72,7 @@ platform :ios do
     end
 
     update_app_identifier(
-    app_identifier: bundle_id + suffix,
+    app_identifier: _app_identifier,
     plist_path: path + "Info.plist"
     )
 
