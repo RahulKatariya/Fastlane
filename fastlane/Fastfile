@@ -56,10 +56,10 @@ platform :ios do
       )
 
       if options[:services] then
-        sh("fastlane produce enable_services #{options[:services]} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
+        sh("fastlane produce enable_services #{options[:services]} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
         if options[:services].include? "--app_group" then
-          sh("fastlane produce group -g group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
-          sh("fastlane produce associate_group -a #{app_identifier} group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{current_team_id}")
+          sh("fastlane produce group -g group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
+          sh("fastlane produce associate_group -a #{app_identifier} group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
         end
       end
     end
@@ -126,7 +126,7 @@ platform :ios do
     xcodeproj: app_name + ".xcodeproj",
     profile: ENV[path],
     target_filter: options[:extension] ? options[:extension] + "Extension" : app_name,
-    build_configuration: options[:configuration]
+    build_configuration: configuration
     )
   end
 
@@ -145,7 +145,7 @@ platform :ios do
 
     gym(
     workspace: app_name + ".xcworkspace",
-    configuration: (options[:configuration]),
+    configuration: (configuration),
     export_method: _export_method,
     scheme: scheme,
     silent: true,
