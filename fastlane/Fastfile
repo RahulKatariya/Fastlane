@@ -26,7 +26,6 @@ platform :ios do
     end
     configuration = options[:configuration]
     produceIPA()
-    signIPA()
     buildIPA()
   end
 
@@ -83,51 +82,6 @@ platform :ios do
         )
     end
 
-  end
-
-  desc "Sign the IPA"
-  lane :signIPA do |options|
-    privateSignIPA(options: options)
-    extensions.each do |extension, services|
-      privateSignIPA(options: options, extension: extension)
-    end
-  end
-
-  desc "Sign the IPA"
-  private_lane :privateSignIPA do |options|
-    automatic_code_signing(
-    path: app_name + ".xcodeproj",
-    use_automatic_signing: false,
-    team_id: team_id,
-    targets: options[:extension] ? options[:extension] + "Extension" : app_name
-    )
-
-    _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
-    suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
-
-    match(
-    type: "development",
-    git_branch: _git_branch,
-    username: apple_id,
-    app_identifier: bundle_id + suffix
-    )
-
-    match(
-    type: "appstore",
-    git_branch: _git_branch,
-    username: apple_id,
-    app_identifier: bundle_id + suffix
-    )
-
-    type = options[:development] ? "development" : "appstore"
-    path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
-
-    update_project_provisioning_profile(
-    xcodeproj: app_name + ".xcodeproj",
-    profile: ENV[path],
-    target_filter: options[:extension] ? options[:extension] + "Extension" : app_name,
-    build_configuration: configuration
-    )
   end
 
   desc "Build the IPA"
