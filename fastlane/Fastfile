@@ -87,7 +87,11 @@ platform :ios do
   desc "Build the IPA"
   lane :buildIPA do |options|
 
-    update_project_team(path: app_name + ".xcodeproj", teamid: team_id)
+    automatic_code_signing(
+    path: app_name + ".xcodeproj",
+    use_automatic_signing: true,
+    team_id: team_id
+    )
 
     _export_method = "app-store"
     _export_method = options[:adhoc] ? "adhoc" : _export_method
