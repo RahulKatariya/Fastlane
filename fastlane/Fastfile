@@ -25,9 +25,9 @@ platform :ios do
       bundle_id["enterprise"] = options[:suffix]
     end
     configuration = options[:configuration]
-    produceIPA()
-    signIPA()
-    buildIPA()
+    produceIPA(options: options)
+    signIPA(options: options)
+    buildIPA(options: options)
   end
 
   desc "Produce the IPA"
