@@ -26,7 +26,9 @@ platform :ios do
     end
     configuration = options[:configuration]
     produceIPA(options: options)
-    signIPA(options: options)
+    if options[:use_match] then
+      signIPA(options: options)
+    end
     buildIPA(options: options)
   end
 
