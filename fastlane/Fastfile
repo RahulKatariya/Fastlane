@@ -25,11 +25,11 @@ platform :ios do
       bundle_id["enterprise"] = options[:suffix]
     end
     configuration = options[:configuration]
-    produceIPA(options: options)
+    produceIPA(options)
     if options[:use_match] then
-      signIPA(options: options)
+      signIPA(options)
     end
-    buildIPA(options: options)
+    buildIPA(options)
   end
 
   desc "Produce the IPA"
@@ -151,8 +151,9 @@ platform :ios do
     silent: true,
     clean: true,
     output_name: app_name,
+    xcargs: "-allowProvisioningUpdates",
     export_xcargs: "-allowProvisioningUpdates",
-    export_options: options[:options][:export_options]
+    export_options: options[:export_options]
     )
 
   end
