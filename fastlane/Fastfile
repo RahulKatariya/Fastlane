@@ -142,19 +142,16 @@ platform :ios do
     _export_method = options[:development] ? "development" : _export_method
     _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
 
-    _icloud_environment = "Production"
-    _icloud_environment = options[:development] ? "Development" : _icloud_environment
-
     gym(
     workspace: app_name + ".xcworkspace",
-    configuration: (configuration),
+    configuration: configuration,
     export_method: _export_method,
     scheme: scheme,
     silent: true,
     clean: true,
     output_name: app_name,
     export_xcargs: "-allowProvisioningUpdates",
-    export_options: ({ iCloudContainerEnvironment: _icloud_environment })
+    export_options: options[:options][:export_options]
     )
 
   end
