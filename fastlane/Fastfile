@@ -147,6 +147,7 @@ platform :ios do
     configuration: configuration,
     export_method: _export_method,
     scheme: scheme,
+    derived_data_path: "./.build/derived-data",
     silent: true,
     clean: true,
     output_name: app_name,
