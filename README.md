@@ -37,7 +37,7 @@ force_for_new_devices true
 Sample Fastfile
 
 ```ruby
-import_from_git(url: 'https://github.com/JetpackSwift/fastlane.git',
+import_from_git(url: 'https://github.com/RahulKatariya/fastlane.git',
                 path: 'fastlane/Fastfile',
-                version: "0.0.1")
+                version: "0.0.3")
 ```
