@@ -22,7 +22,7 @@ platform :ios do
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     if ENV['EXTENSIONS'] then
-      extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(",")
+      extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(","))
     end
     if options[:suffix] then
       bundle_id["enterprise"] = options[:suffix]
