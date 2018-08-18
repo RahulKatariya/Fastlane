@@ -10,7 +10,7 @@ configuration = ''
 
 app_name = ENV['APP_NAME']
 scheme = ENV['SCHEME']
-extensions = nil
+extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(","))
 services = ENV['SERVICES']
 
 default_platform :ios
@@ -21,9 +21,6 @@ platform :ios do
   lane :makeIPA do |options|
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
-    if ENV['EXTENSIONS'] then
-      extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(","))
-    end
     if options[:suffix] then
       bundle_id["enterprise"] = options[:suffix]
     end
