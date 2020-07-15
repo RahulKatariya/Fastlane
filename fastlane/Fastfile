@@ -75,7 +75,7 @@ platform :ios do
 
     update_app_identifier(
     app_identifier: _app_identifier,
-    plist_path: path + "Info.plist"
+    plist_path: "Info.plist"
     )
 
     if options[:extension] then
