@@ -10,13 +10,12 @@ configuration = ''
 
 app_name = ENV['APP_NAME']
 scheme = ENV['SCHEME']
-extensions = ENV['EXTENSIONS'].split(",").zip(ENV['EXTENSIONS_SERVICES'].split(","))
+extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
 services = ENV['SERVICES']
 
 default_platform :ios
 
 platform :ios do
-
   desc "Make the IPA"
   lane :makeIPA do |options|
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
@@ -42,7 +41,7 @@ platform :ios do
 
   desc "Produce the IPA"
   private_lane :privateProduceIPA do |options|
-
+    options = options[:options]
     suffix = ""
     if options[:extension] then
         suffix = "." + options[:extension] + "Extension"
@@ -51,10 +50,9 @@ platform :ios do
     _app_identifier = bundle_id + suffix
     if options[:force] then
       produce(
-      username: apple_id,
-      app_identifier: _app_identifier,
-      app_name: app_name,
-      skip_itc: true,
+        username: apple_id,
+        app_identifier: _app_identifier,
+        app_name: app_name,
       )
 
       if options[:services] then
@@ -70,21 +68,20 @@ platform :ios do
     if options[:extension] then
         path = options[:extension] + "Extension/"
     else
-        path = app_name + "-"
+        path = scheme + "/"
     end
 
     update_app_identifier(
-    app_identifier: _app_identifier,
-    plist_path: "Info.plist"
+      app_identifier: _app_identifier,
+      plist_path: path + "Info.plist"
     )
 
     if options[:extension] then
         update_app_group_identifiers(
-        entitlements_file: path + options[:extension] + "Extension.entitlements",
-  	    app_group_identifiers: ['group.' + bundle_id]
+          entitlements_file: path + options[:extension] + "Extension.entitlements",
+  	      app_group_identifiers: ['group.' + bundle_id]
         )
     end
-
   end
 
   desc "Sign the IPA"
@@ -97,11 +94,12 @@ platform :ios do
 
   desc "Sign the IPA"
   private_lane :privateSignIPA do |options|
+    options = options[:options]
     automatic_code_signing(
-    path: app_name + ".xcodeproj",
-    use_automatic_signing: false,
-    team_id: team_id,
-    targets: options[:extension] ? options[:extension] + "Extension" : app_name
+      path: app_name + ".xcodeproj",
+      use_automatic_signing: false,
+      team_id: team_id,
+      targets: options[:extension] ? options[:extension] + "Extension" : scheme
     )
 
     _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
@@ -115,26 +113,25 @@ platform :ios do
     # )
 
     match(
-    type: "appstore",
-    git_branch: _git_branch,
-    username: apple_id,
-    app_identifier: bundle_id + suffix
+      type: "appstore",
+      git_branch: _git_branch,
+      username: apple_id,
+      app_identifier: bundle_id + suffix
     )
 
     type = options[:development] ? "development" : "appstore"
     path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
 
     update_project_provisioning_profile(
-    xcodeproj: app_name + ".xcodeproj",
-    profile: ENV[path],
-    target_filter: options[:extension] ? options[:extension] + "Extension" : app_name,
-    build_configuration: configuration
+      xcodeproj: app_name + ".xcodeproj",
+      profile: ENV[path],
+      target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
+      build_configuration: configuration
     )
   end
 
   desc "Build the IPA"
   lane :buildIPA do |options|
-
     update_project_team(path: app_name + ".xcodeproj", teamid: team_id)
 
     _export_method = "app-store"
@@ -143,21 +140,19 @@ platform :ios do
     _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
 
     gym(
-    workspace: app_name + ".xcworkspace",
-    configuration: configuration,
-    export_method: _export_method,
-    scheme: scheme,
-    derived_data_path: "./.build/derived-data",
-    silent: true,
-    clean: true,
-    output_name: app_name,
-    xcargs: "-allowProvisioningUpdates",
-    export_xcargs: "-allowProvisioningUpdates",
-    export_options: options[:export_options]
+      workspace: app_name + ".xcworkspace",
+      configuration: configuration,
+      export_method: _export_method,
+      scheme: scheme,
+      derived_data_path: "./.build/derived-data",
+      silent: true,
+      clean: true,
+      output_name: app_name,
+      xcargs: "-allowProvisioningUpdates",
+      export_xcargs: "-allowProvisioningUpdates",
+      export_options: options[:export_options]
     )
-
   end
-
 end
 
 # More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/docs/Platforms.md
