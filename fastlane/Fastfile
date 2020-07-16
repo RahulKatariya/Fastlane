@@ -86,6 +86,10 @@ platform :ios do
 
   desc "Sign the IPA"
   lane :signIPA do |options|
+    update_code_signing_settings(
+      path: app_name + ".xcodeproj",
+      team_id: team_id
+    )
     privateSignIPA(options: options)
     extensions.each do |extension, services|
       privateSignIPA(options: options, extension: extension)
@@ -95,12 +99,6 @@ platform :ios do
   desc "Sign the IPA"
   private_lane :privateSignIPA do |options|
     options = options[:options]
-    automatic_code_signing(
-      path: app_name + ".xcodeproj",
-      use_automatic_signing: false,
-      team_id: team_id,
-      targets: options[:extension] ? options[:extension] + "Extension" : scheme
-    )
 
     _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
     suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
