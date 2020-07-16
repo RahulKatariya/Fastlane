@@ -105,19 +105,21 @@ platform :ios do
     _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
     suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
 
-    # match(
-    # type: "development",
-    # git_branch: _git_branch,
-    # username: apple_id,
-    # app_identifier: bundle_id + suffix
-    # )
-
-    match(
-      type: "appstore",
-      git_branch: _git_branch,
-      username: apple_id,
-      app_identifier: bundle_id + suffix
-    )
+    if options[:development]    
+      match(
+         type: "development",
+         git_branch: _git_branch,
+         username: apple_id,
+         app_identifier: bundle_id + suffix
+       )
+    else
+      match(
+        type: "appstore",
+        git_branch: _git_branch,
+        username: apple_id,
+        app_identifier: bundle_id + suffix
+      )
+    end
 
     type = options[:development] ? "development" : "appstore"
     path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
