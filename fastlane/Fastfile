@@ -10,6 +10,7 @@ configuration = ''
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
+dir = ENV['DIR'] || ENV['SCHEME']
 scheme = ENV['SCHEME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
 services = ENV['SERVICES']
@@ -69,7 +70,7 @@ platform :ios do
     if options[:extension] then
         path = options[:extension] + "Extension/"
     else
-        path = scheme + "/"
+        path = dir + "/"
     end
 
     update_app_identifier(
