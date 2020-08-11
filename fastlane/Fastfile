@@ -8,6 +8,7 @@ bundle_id = ''
 team_id = ''
 configuration = ''
 
+project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
 scheme = ENV['SCHEME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
@@ -87,7 +88,7 @@ platform :ios do
   desc "Sign the IPA"
   lane :signIPA do |options|
     update_code_signing_settings(
-      path: app_name + ".xcodeproj",
+      path: project_name + ".xcodeproj",
       team_id: team_id
     )
     privateSignIPA(options: options)
@@ -123,7 +124,7 @@ platform :ios do
     path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
 
     update_project_provisioning_profile(
-      xcodeproj: app_name + ".xcodeproj",
+      xcodeproj: project_name + ".xcodeproj",
       profile: ENV[path],
       target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
       build_configuration: configuration
@@ -132,7 +133,7 @@ platform :ios do
 
   desc "Build the IPA"
   lane :buildIPA do |options|
-    update_project_team(path: app_name + ".xcodeproj", teamid: team_id)
+    update_project_team(path: project_name + ".xcodeproj", teamid: team_id)
 
     _export_method = "app-store"
     _export_method = options[:adhoc] ? "adhoc" : _export_method
@@ -140,7 +141,7 @@ platform :ios do
     _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
 
     gym(
-      workspace: app_name + ".xcworkspace",
+      workspace: project_name + ".xcworkspace",
       configuration: configuration,
       export_method: _export_method,
       scheme: scheme,
