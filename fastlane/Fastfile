@@ -10,6 +10,7 @@ configuration = ''
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
+target = ENV['TARGET']
 dir_name = ENV['DIR_NAME'] || ENV['SCHEME']
 scheme = ENV['SCHEME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
@@ -148,7 +149,7 @@ platform :ios do
       scheme: scheme,
       silent: true,
       clean: true,
-      output_name: app_name,
+      output_name: target,
       xcargs: "-allowProvisioningUpdates",
       export_xcargs: "-allowProvisioningUpdates",
       export_options: options[:export_options]
