@@ -9,8 +9,6 @@ team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
-dir_name = ENV['DIR_NAME'] || ENV['SCHEME']
-scheme = ENV['SCHEME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
 services = ENV['SERVICES']
 
@@ -20,6 +18,8 @@ lane :makeIPA do |options|
     bundle_id["enterprise"] = options[:suffix]
   end
   @configuration = options[:configuration]
+  @scheme = options[:scheme]
+  @dir_name = options[:dir_name] || options[:scheme]
   produceIPA(options)
   if options[:use_match] then
     signIPA(options)
@@ -64,7 +64,7 @@ private_lane :privateProduceIPA do |options|
   if options[:extension] then
       path = options[:extension] + "Extension/"
   else
-      path = dir_name + "/"
+      path = @dir_name + "/"
   end
 
   update_app_identifier(
@@ -121,7 +121,7 @@ private_lane :privateSignIPA do |options|
   update_project_provisioning_profile(
     xcodeproj: project_name + ".xcodeproj",
     profile: ENV[path],
-    target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
+    target_filter: options[:extension] ? options[:extension] + "Extension" : @scheme,
     build_configuration: @configuration
   )
 end
@@ -139,7 +139,7 @@ lane :buildIPA do |options|
     workspace: project_name + ".xcworkspace",
     configuration: @configuration,
     export_method: _export_method,
-    scheme: scheme,
+    scheme: @scheme,
     silent: true,
     clean: true,
     output_name: app_name,
