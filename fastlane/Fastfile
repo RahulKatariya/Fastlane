@@ -15,146 +15,141 @@ scheme = ENV['SCHEME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
 services = ENV['SERVICES']
 
-default_platform :ios
-
-platform :ios do
-  desc "Make the IPA"
-  lane :makeIPA do |options|
-    team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
-    bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
-    if options[:suffix] then
-      bundle_id["enterprise"] = options[:suffix]
-    end
-    configuration = options[:configuration]
-    produceIPA(options)
-    if options[:use_match] then
-      signIPA(options)
-    end
-    buildIPA(options)
+desc "Make the IPA"
+lane :makeIPA do |options|
+  team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+  bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+  if options[:suffix] then
+    bundle_id["enterprise"] = options[:suffix]
   end
-
-  desc "Produce the IPA"
-  lane :produceIPA do |options|
-    privateProduceIPA(options: options)
-    extensions.each do |extension, services|
-      privateProduceIPA(options: options, extension: extension, services: services)
-    end
+  configuration = options[:configuration]
+  produceIPA(options)
+  if options[:use_match] then
+    signIPA(options)
   end
+  buildIPA(options)
+end
 
-  desc "Produce the IPA"
-  private_lane :privateProduceIPA do |options|
-    options = options[:options]
-    suffix = ""
-    if options[:extension] then
-        suffix = "." + options[:extension] + "Extension"
-    end
-
-    _app_identifier = bundle_id + suffix
-    if options[:force] then
-      produce(
-        username: apple_id,
-        app_identifier: _app_identifier,
-        app_name: app_name,
-      )
-
-      if options[:services] then
-        sh("fastlane produce enable_services #{options[:services]} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
-        if options[:services].include? "--app_group" then
-          sh("fastlane produce group -g group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
-          sh("fastlane produce associate_group -a #{app_identifier} group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
-        end
-      end
-    end
-
-    path = ""
-    if options[:extension] then
-        path = options[:extension] + "Extension/"
-    else
-        path = dir_name + "/"
-    end
-
-    update_app_identifier(
-      app_identifier: _app_identifier,
-      plist_path: path + "Info.plist"
-    )
-
-    if options[:extension] then
-        update_app_group_identifiers(
-          entitlements_file: path + options[:extension] + "Extension.entitlements",
-  	      app_group_identifiers: ['group.' + bundle_id]
-        )
-    end
-  end
-
-  desc "Sign the IPA"
-  lane :signIPA do |options|
-    update_code_signing_settings(
-      path: project_name + ".xcodeproj",
-      team_id: team_id
-    )
-    privateSignIPA(options: options)
-    extensions.each do |extension, services|
-      privateSignIPA(options: options, extension: extension)
-    end
-  end
-
-  desc "Sign the IPA"
-  private_lane :privateSignIPA do |options|
-    options = options[:options]
-
-    _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
-    suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
-
-    if options[:development]    
-      match(
-         type: "development",
-         git_branch: _git_branch,
-         username: apple_id,
-         app_identifier: bundle_id + suffix
-       )
-    else
-      match(
-        type: "appstore",
-        git_branch: _git_branch,
-        username: apple_id,
-        app_identifier: bundle_id + suffix
-      )
-    end
-
-    type = options[:development] ? "development" : "appstore"
-    path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
-
-    update_project_provisioning_profile(
-      xcodeproj: project_name + ".xcodeproj",
-      profile: ENV[path],
-      target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
-      build_configuration: configuration
-    )
-  end
-
-  desc "Build the IPA"
-  lane :buildIPA do |options|
-    update_project_team(path: project_name + ".xcodeproj", teamid: team_id)
-
-    _export_method = "app-store"
-    _export_method = options[:adhoc] ? "adhoc" : _export_method
-    _export_method = options[:development] ? "development" : _export_method
-    _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
-
-    gym(
-      workspace: project_name + ".xcworkspace",
-      configuration: configuration,
-      export_method: _export_method,
-      scheme: scheme,
-      silent: true,
-      clean: true,
-      output_name: app_name,
-      xcargs: "-allowProvisioningUpdates",
-      export_xcargs: "-allowProvisioningUpdates",
-      export_options: options[:export_options]
-    )
+desc "Produce the IPA"
+lane :produceIPA do |options|
+  privateProduceIPA(options: options)
+  extensions.each do |extension, services|
+    privateProduceIPA(options: options, extension: extension, services: services)
   end
 end
 
+desc "Produce the IPA"
+private_lane :privateProduceIPA do |options|
+  options = options[:options]
+  suffix = ""
+  if options[:extension] then
+      suffix = "." + options[:extension] + "Extension"
+  end
+
+  _app_identifier = bundle_id + suffix
+  if options[:force] then
+    produce(
+      username: apple_id,
+      app_identifier: _app_identifier,
+      app_name: app_name,
+    )
+
+    if options[:services] then
+      sh("fastlane produce enable_services #{options[:services]} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
+      if options[:services].include? "--app_group" then
+        sh("fastlane produce group -g group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
+        sh("fastlane produce associate_group -a #{app_identifier} group.#{app_identifier} --app_identifier #{_app_identifier} --app_name #{app_name} --team_id #{team_id}")
+      end
+    end
+  end
+
+  path = ""
+  if options[:extension] then
+      path = options[:extension] + "Extension/"
+  else
+      path = dir_name + "/"
+  end
+
+  update_app_identifier(
+    app_identifier: _app_identifier,
+    plist_path: path + "Info.plist"
+  )
+
+  if options[:extension] then
+      update_app_group_identifiers(
+        entitlements_file: path + options[:extension] + "Extension.entitlements",
+        app_group_identifiers: ['group.' + bundle_id]
+      )
+  end
+end
+
+desc "Sign the IPA"
+lane :signIPA do |options|
+  update_code_signing_settings(
+    path: project_name + ".xcodeproj",
+    team_id: team_id
+  )
+  privateSignIPA(options: options)
+  extensions.each do |extension, services|
+    privateSignIPA(options: options, extension: extension)
+  end
+end
+
+desc "Sign the IPA"
+private_lane :privateSignIPA do |options|
+  options = options[:options]
+
+  _git_branch = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : "master"
+  suffix = options[:extension] ? suffix = "." + options[:extension] + "Extension" : ""
+
+  if options[:development]    
+    match(
+       type: "development",
+       git_branch: _git_branch,
+       username: apple_id,
+       app_identifier: bundle_id + suffix
+     )
+  else
+    match(
+      type: "appstore",
+      git_branch: _git_branch,
+      username: apple_id,
+      app_identifier: bundle_id + suffix
+    )
+  end
+
+  type = options[:development] ? "development" : "appstore"
+  path = "sigh_" + bundle_id + suffix + "_" + type + "_profile-path"
+
+  update_project_provisioning_profile(
+    xcodeproj: project_name + ".xcodeproj",
+    profile: ENV[path],
+    target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
+    build_configuration: configuration
+  )
+end
+
+desc "Build the IPA"
+lane :buildIPA do |options|
+  update_project_team(path: project_name + ".xcodeproj", teamid: team_id)
+
+  _export_method = "app-store"
+  _export_method = options[:adhoc] ? "adhoc" : _export_method
+  _export_method = options[:development] ? "development" : _export_method
+  _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
+
+  gym(
+    workspace: project_name + ".xcworkspace",
+    configuration: configuration,
+    export_method: _export_method,
+    scheme: scheme,
+    silent: true,
+    clean: true,
+    output_name: app_name,
+    xcargs: "-allowProvisioningUpdates",
+    export_xcargs: "-allowProvisioningUpdates",
+    export_options: options[:export_options]
+  )
+end
 # More information about multiple platforms in fastlane: https://github.com/fastlane/fastlane/blob/master/docs/Platforms.md
 # All available actions: https://github.com/fastlane/fastlane/blob/master/docs/Actions.md
