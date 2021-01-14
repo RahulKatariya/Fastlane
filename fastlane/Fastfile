@@ -6,7 +6,6 @@
 apple_id = CredentialsManager::AppfileConfig.try_fetch_value(:apple_id)
 bundle_id = ''
 team_id = ''
-configuration = ''
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
@@ -22,7 +21,7 @@ lane :makeIPA do |options|
   if options[:suffix] then
     bundle_id["enterprise"] = options[:suffix]
   end
-  configuration = options[:configuration]
+  @configuration = options[:configuration]
   produceIPA(options)
   if options[:use_match] then
     signIPA(options)
@@ -125,7 +124,7 @@ private_lane :privateSignIPA do |options|
     xcodeproj: project_name + ".xcodeproj",
     profile: ENV[path],
     target_filter: options[:extension] ? options[:extension] + "Extension" : scheme,
-    build_configuration: configuration
+    build_configuration: @configuration
   )
 end
 
@@ -140,7 +139,7 @@ lane :buildIPA do |options|
 
   gym(
     workspace: project_name + ".xcworkspace",
-    configuration: configuration,
+    configuration: @configuration,
     export_method: _export_method,
     scheme: scheme,
     silent: true,
