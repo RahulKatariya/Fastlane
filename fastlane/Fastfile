@@ -4,8 +4,8 @@
 # can also be listed using the `fastlane actions` command
 
 apple_id = CredentialsManager::AppfileConfig.try_fetch_value(:apple_id)
-bundle_id = ''
-team_id = ''
+bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
@@ -16,8 +16,6 @@ services = ENV['SERVICES']
 
 desc "Make the IPA"
 lane :makeIPA do |options|
-  team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
-  bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
   if options[:suffix] then
     bundle_id["enterprise"] = options[:suffix]
   end
