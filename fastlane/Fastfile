@@ -142,7 +142,7 @@ lane :buildIPA do |options|
     scheme: @scheme,
     silent: true,
     clean: true,
-    output_name: app_name,
+    output_name: project_name,
     xcargs: "-allowProvisioningUpdates",
     export_xcargs: "-allowProvisioningUpdates",
     export_options: options[:export_options]
