@@ -143,6 +143,7 @@ lane :buildIPA do |options|
     silent: true,
     clean: true,
     output_name: project_name,
+    destination: options[:mac] ? "generic/platform=macOS" : "generic/platform=iOS",
     catalyst_platform: options[:mac] ? "macos" : "ios",
     xcargs: "-allowProvisioningUpdates",
     export_xcargs: "-allowProvisioningUpdates",
