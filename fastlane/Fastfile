@@ -8,6 +8,7 @@ bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
 team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
 
 project_name = ENV['PROJECT_NAME'] || ENV['APP_NAME']
+workspace_name = ENV['WORKSPACE_NAME'] || ENV['PROJECT_NAME'] || ENV['APP_NAME']
 app_name = ENV['APP_NAME']
 extensions = (ENV['EXTENSIONS'] || "").split(",").zip((ENV['EXTENSIONS_SERVICES'] || "").split(","))
 services = ENV['SERVICES']
@@ -136,7 +137,7 @@ lane :buildIPA do |options|
   _export_method = ENV["MATCH_FORCE_ENTERPRISE"] ? "enterprise" : _export_method
 
   gym(
-    workspace: project_name + ".xcworkspace",
+    workspace: workspace_name + ".xcworkspace",
     configuration: @configuration,
     export_method: _export_method,
     scheme: @scheme,
