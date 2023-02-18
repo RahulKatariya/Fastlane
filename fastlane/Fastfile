@@ -143,6 +143,7 @@ lane :buildIPA do |options|
     scheme: @scheme,
     silent: true,
     clean: true,
+    output_directory: options[:mac] ? "artifacts/macOS" : "artifacts/iOS",
     output_name: project_name,
     destination: options[:mac] ? "generic/platform=macOS" : "generic/platform=iOS",
     catalyst_platform: options[:mac] ? "macos" : "ios",
