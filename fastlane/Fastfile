@@ -144,7 +144,7 @@ lane :buildIPA do |options|
     silent: true,
     clean: true,
     output_directory: options[:mac] ? "artifacts/macOS" : "artifacts/iOS",
-    output_name: options[:mac] ? project_name + ".pkg" : project_name + ".ipa",
+    output_name: project_name,
     destination: options[:mac] ? "generic/platform=macOS" : "generic/platform=iOS",
     catalyst_platform: options[:mac] ? "macos" : "ios",
     xcargs: "-allowProvisioningUpdates",
