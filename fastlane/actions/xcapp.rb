@@ -45,6 +45,8 @@ module Fastlane
         # export options plist
         export_options_plist = params[:exportOptions] || "fastlane/exportOptions.plist"
 
+        bundle_id = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+
         # The args we will build with
         xcodebuild_args = Array[]
 
@@ -56,6 +58,7 @@ module Fastlane
         xcodebuild_args << "-destination generic/platform=#{platform}"
         xcodebuild_args << "-derivedDataPath #{output_path}/derivedData/#{platform}"
         xcodebuild_args << "-archivePath #{archive_path}"
+        xcodebuild_args << "COMPANION_APP_BUNDLE_IDENTIFIER=#{bundle_id}"
 
         # Joins args into space delimited string
         xcodebuild_args = xcodebuild_args.join(" ")
@@ -100,7 +103,7 @@ module Fastlane
         )
 
         FastlaneCore::CommandExecutor.execute(
-          command: "set -o pipefail && cp -r #{archive_path}/dSYMs/ #{artifacts_path}/dSYMs && pushd #{artifacts_path} && zip -r #{platform}_dSYMs.zip dSYMs && popd",
+          command: "set -o pipefail && cp -r #{archive_path}/dSYMs #{artifacts_path}/dSYMs && pushd #{artifacts_path} && zip -r #{platform}_dSYMs.zip dSYMs && popd",
           print_all: true,
           print_command: true,
           error: proc do |output|
